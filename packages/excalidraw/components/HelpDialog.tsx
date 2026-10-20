@@ -59,12 +59,42 @@ const Header = () => (
   </div>
 );
 
-const Section = (props: { title: string; children: React.ReactNode }) => (
-  <>
-    <h3>{props.title}</h3>
-    <div className="HelpDialog__islands-container">{props.children}</div>
-  </>
-);
+const Section = (props: {
+  title: string;
+  children: React.ReactNode;
+  searchTerm: string;
+}) => {
+  const query = props.searchTerm.trim().toLocaleLowerCase();
+  const islands = React.Children.toArray(props.children).flatMap((island) => {
+    if (
+      !React.isValidElement<React.ComponentProps<typeof ShortcutIsland>>(island)
+    ) {
+      return [];
+    }
+    const shortcuts = React.Children.toArray(island.props.children).filter(
+      (shortcut) =>
+        React.isValidElement<React.ComponentProps<typeof Shortcut>>(shortcut) &&
+        [shortcut.props.label, ...shortcut.props.shortcuts].some((value) =>
+          value.toLocaleLowerCase().includes(query),
+        ),
+    );
+    return shortcuts.length ? [React.cloneElement(island, {}, shortcuts)] : [];
+  });
+
+  return (
+    <>
+      <h3>{props.title}</h3>
+      <div
+        className={`HelpDialog__islands-container${
+          query ? " HelpDialog__islands-container--filtered" : ""
+        }`}
+      >
+        {islands}
+      </div>
+      {islands.length === 0 && <p role="status">{t("search.noMatch")}</p>}
+    </>
+  );
+};
 
 const ShortcutIsland = (props: {
   caption: string;
@@ -126,6 +156,7 @@ const ShortcutKey = (props: { children: React.ReactNode }) => (
 );
 
 export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
+  const [searchTerm, setSearchTerm] = React.useState("");
   const actionManager = useExcalidrawActionManager();
   const handleClose = React.useCallback(() => {
     if (onClose) {
@@ -141,7 +172,15 @@ export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
         className={"HelpDialog"}
       >
         <Header />
-        <Section title={t("helpDialog.shortcuts")}>
+        <input
+          type="search"
+          className="HelpDialog__search"
+          aria-label={`${t("search.title")}: ${t("helpDialog.shortcuts")}`}
+          placeholder={t("quickSearch.placeholder")}
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
+        <Section title={t("helpDialog.shortcuts")} searchTerm={searchTerm}>
           <ShortcutIsland
             className="HelpDialog__island--tools"
             caption={t("helpDialog.tools")}
