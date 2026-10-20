@@ -1,5 +1,23 @@
 @use "../css/variables.module" as *;
 
+// Keep search results compact when entire shortcut groups are filtered out.
+.excalidraw .HelpDialog {
+  .HelpDialog__search {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--dialog-border-color);
+    border-radius: var(--border-radius-lg);
+    background: var(--island-bg-color);
+    color: var(--text-primary-color);
+    font: inherit;
+  }
+
+  .HelpDialog__islands-container--filtered > .HelpDialog__island {
+    grid-area: auto;
+  }
+}
 .excalidraw {
   .HelpDialog {
     .Modal__content {
